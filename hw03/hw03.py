@@ -1,4 +1,7 @@
+from functools import reduce
+
 HW_SOURCE_FILE = 'hw03.py'
+
 
 #############
 # Questions #
@@ -24,10 +27,23 @@ def has_seven(k):
     ...       ['Assign', 'AugAssign'])
     True
     """
-    "*** YOUR CODE HERE ***"
+    if len(str(k)) == 1:
+        return str(k) == '7'
+    elif str(k)[:1] == '7':
+        return True
+    else:
+        return has_seven(str(k)[1:])
+
+    # Model Ans:
+    # if k % 10 == 7:
+    #     return True
+    # elif k < 10:
+    #     return False
+    # else:
+    #     return has_seven(k // 10)
+
 
 def summation(n, term):
-
     """Return the sum of the first n terms in the sequence defined by term.
     Implement using recursion!
 
@@ -44,13 +60,20 @@ def summation(n, term):
     True
     """
     assert n >= 1
-    "*** YOUR CODE HERE ***"
+
+    if n == 1:
+        return term(1)
+    else:
+        return term(n) + summation(n - 1, term)
+
 
 def square(x):
     return x * x
 
+
 def identity(x):
     return x
+
 
 triple = lambda x: 3 * x
 
@@ -59,6 +82,7 @@ increment = lambda x: x + 1
 add = lambda x, y: x + y
 
 mul = lambda x, y: x * y
+
 
 def accumulate(combiner, base, n, term):
     """Return the result of combining the first n terms in a sequence and base.
@@ -76,7 +100,30 @@ def accumulate(combiner, base, n, term):
     >>> accumulate(mul, 2, 3, square)   # 2 * 1^2 * 2^2 * 3^2
     72
     """
-    "*** YOUR CODE HERE ***"
+    if n == 0:
+        return base
+
+    applied_n = map(term, range(1, n + 1))
+    combined_n = reduce(combiner, applied_n)
+    return combiner(base, combined_n)
+
+    # total, k = base, 1
+    # while k <= n:
+    #     total, k = combiner(total, term(k)), k + 1
+    # return total
+
+    # Recursive solution
+    # if n == 0:
+    #     return base
+    # else:
+    #     return combiner(term(n), accumulate(combiner, base, n-1, term))
+
+    # Recursive solution using base to keep track of total
+    # if n == 0:
+    #     return base
+    # else:
+    #     return accumulate(combiner, combiner(base, term(n)), n-1, term)
+
 
 def summation_using_accumulate(n, term):
     """Returns the sum of term(1) + ... + term(n). The implementation
@@ -91,7 +138,7 @@ def summation_using_accumulate(n, term):
     ...       ['Recursion', 'For', 'While'])
     True
     """
-    "*** YOUR CODE HERE ***"
+    return accumulate(add, 0, n, term)
 
 def product_using_accumulate(n, term):
     """An implementation of product using accumulate.
@@ -105,7 +152,7 @@ def product_using_accumulate(n, term):
     ...       ['Recursion', 'For', 'While'])
     True
     """
-    "*** YOUR CODE HERE ***"
+    return accumulate(mul, 1, n, term)
 
 def filtered_accumulate(combiner, base, pred, n, term):
     """Return the result of combining the terms in a sequence of N terms
@@ -131,14 +178,18 @@ def filtered_accumulate(combiner, base, pred, n, term):
     True
     """
     def combine_if(x, y):
-        "*** YOUR CODE HERE ***"
+        return combiner(x, y) if pred(y) else x
+
     return accumulate(combine_if, base, n, term)
+
 
 def odd(x):
     return x % 2 == 1
 
+
 def greater_than_5(x):
     return x > 5
+
 
 def make_repeater(f, n):
     """Return the function that computes the nth application of f.
@@ -155,37 +206,55 @@ def make_repeater(f, n):
     >>> make_repeater(square, 0)(5)
     5
     """
-    "*** YOUR CODE HERE ***"
+    # First Attempt: Loop to compose
+    # temp = f
+    # for _ in range(n-1):
+    #     temp = compose1(temp, f)
+    #
+    # return temp
+
+    # Second attempt using accumulate to loop + compose
+    # Combiner is the compose func
+    # base is a identity function instead of 0 as we are combining functions instead of ints
+    # term is a function that just returns function f no matter what the I/P
+    return accumulate(compose1, identity, n, lambda x: f)
 
 def compose1(f, g):
     """Return a function h, such that h(x) = f(g(x))."""
+
     def h(x):
         return f(g(x))
+
     return h
+
 
 ###################
 # Extra Questions #
 ###################
 
-quine = """
-"*** YOUR CODE HERE ***"
-"""
+quine = """ """
+
 
 def zero(f):
     return lambda x: x
 
+
 def successor(n):
     return lambda f: lambda x: f(n(f)(x))
+
 
 def one(f):
     """Church numeral 1: same as successor(zero)"""
     "*** YOUR CODE HERE ***"
 
+
 def two(f):
     """Church numeral 2: same as successor(successor(zero))"""
     "*** YOUR CODE HERE ***"
 
+
 three = successor(two)
+
 
 def church_to_int(n):
     """Convert the Church numeral n to a Python integer.
@@ -201,6 +270,7 @@ def church_to_int(n):
     """
     "*** YOUR CODE HERE ***"
 
+
 def add_church(m, n):
     """Return the Church numeral for m + n, for Church numerals m and n.
 
@@ -208,6 +278,7 @@ def add_church(m, n):
     5
     """
     "*** YOUR CODE HERE ***"
+
 
 def mul_church(m, n):
     """Return the Church numeral for m * n, for Church numerals m and n.
@@ -220,6 +291,7 @@ def mul_church(m, n):
     """
     "*** YOUR CODE HERE ***"
 
+
 def pow_church(m, n):
     """Return the Church numeral m ** n, for Church numerals m and n.
 
@@ -230,6 +302,14 @@ def pow_church(m, n):
     """
     "*** YOUR CODE HERE ***"
 
+
 if __name__ == "__main__":
     import doctest
-    doctest.testmod()
+    import sys
+
+    func_to_exec = sys.argv[1]
+    if func_to_exec in dir():
+        doctest.run_docstring_examples(globals().get(func_to_exec), globals(), verbose=True)
+    else:
+        print("{} was not found".format(func_to_exec))
+    # doctest.testmod()
